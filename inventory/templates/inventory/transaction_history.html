@@ -6,35 +6,44 @@
 {% block content %}
 <div class="container py-5">
     <h2 class="text-center mb-4">📜 Transaction History</h2>
-    <table class="table table-striped table-bordered">
+
+    <table class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
-                <th>Date</th>
+                <th>ID</th>
                 <th>Item</th>
-                <th>Type</th>
+                <th>Category</th>
+                <th>Transaction Type</th>
                 <th>Quantity</th>
+                <th>Date</th>
+                <th>Remarks</th>
             </tr>
         </thead>
         <tbody>
-            {% for t in transactions %}
+            {% for txn in transactions %}
             <tr>
-                <td>{{ t.date|date:"d M Y, H:i" }}</td>
-                <td>{{ t.item.name }}</td>
+                <td>{{ txn.id }}</td>
+                <td>{{ txn.item.name }}</td>
                 <td>
-                    {% if t.transaction_type == 'IN' %}
-                        <span class="badge bg-success">Added</span>
+                    {% if txn.item.category in PREDEFINED_CATEGORIES %}
+                        {{ txn.item.category }}
                     {% else %}
-                        <span class="badge bg-danger">Removed</span>
+                        {{ txn.item.category }} <span class="badge bg-info text-dark">Custom</span>
                     {% endif %}
                 </td>
-                <td>{{ t.quantity }}</td>
+                <td>{{ txn.transaction_type }}</td>
+                <td>{{ txn.quantity }}</td>
+                <td>{{ txn.date|date:"Y-m-d H:i" }}</td>
+                <td>{{ txn.remarks }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" class="text-center text-muted">No transactions found</td>
+                <td colspan="7" class="text-center text-muted">No transactions available</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 {% endblock %}
+
+
