@@ -13,9 +13,22 @@
                 <label>Name</label>
                 <input type="text" name="name" class="form-control" required>
             </div>
+
+            <!-- ✅ Updated Category Section -->
             <div class="col-md-6 mb-3">
-                <label>Category</label>
-                <input type="text" name="category" class="form-control" required>
+                <label for="category" class="form-label">Category</label>
+                <select id="category" name="category" class="form-select" onchange="toggleCustomCategory(this)" required>
+                    <option value="">Select Category</option>
+                    <option value="Sensor">Sensor</option>
+                    <option value="Connector">Connector</option>
+                    <option value="Resistor">Resistor</option>
+                    <option value="Microcontroller">Microcontroller</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <div class="mt-2" id="custom-category-div" style="display: none;">
+                    <input type="text" name="custom_category" id="custom_category" class="form-control" placeholder="Enter custom category">
+                </div>
             </div>
         </div>
 
@@ -51,4 +64,17 @@
         <a href="{% url 'inventory_list' %}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+
+<!-- ✅ Script to show/hide custom category input -->
+<script>
+function toggleCustomCategory(select) {
+    var customDiv = document.getElementById('custom-category-div');
+    if(select.value === 'Other'){
+        customDiv.style.display = 'block';
+    } else {
+        customDiv.style.display = 'none';
+        document.getElementById('custom_category').value = '';
+    }
+}
+</script>
 {% endblock %}

@@ -43,9 +43,15 @@
         <tbody>
             {% for item in items %}
             <tr>
-                <td>{{ item.id }}</td>
+                <td>{{ item.serial_no }}</td>
                 <td>{{ item.name }}</td>
-                <td>{{ item.category }}</td>
+                <td>
+                    {% if item.category in PREDEFINED_CATEGORIES %}
+                        {{ item.category }}
+                    {% else %}
+                        {{ item.category }} <span class="badge bg-info text-dark">Custom</span>
+                    {% endif %}
+                </td>
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.reorder_level }}</td>
             </tr>
@@ -58,3 +64,5 @@
     </table>
 </div>
 {% endblock %}
+
+

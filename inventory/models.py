@@ -124,6 +124,7 @@ class Item(models.Model):
     serial_no = models.PositiveIntegerField(unique=True, blank=True, null=True)
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    custom_category = models.CharField(max_length=100, blank=True, null=True)
     quantity = models.PositiveIntegerField(default=0)
     reorder_level = models.PositiveIntegerField(default=5)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -132,8 +133,19 @@ class Item(models.Model):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # def save(self, *args, **kwargs):
+    #     # ✅ Automatically assign serial number safely
+    #     if not self.serial_no:
+    #         last_item = Item.objects.order_by('-serial_no').first()
+    #         self.serial_no = (last_item.serial_no + 1) if last_item and last_item.serial_no else 1
+    #     super().save(*args, **kwargs)
+
+     # save method
     def save(self, *args, **kwargs):
-        # ✅ Automatically assign serial number safely
+        # If 'Other' is selected, use custom_category
+        if self.category == 'Other' and self.custom_category:
+            self.category = self.custom_category
+        # Serial no logic
         if not self.serial_no:
             last_item = Item.objects.order_by('-serial_no').first()
             self.serial_no = (last_item.serial_no + 1) if last_item and last_item.serial_no else 1
