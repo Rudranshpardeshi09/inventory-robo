@@ -10,19 +10,19 @@
     <table class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
-                <th>ID</th>
+                <th>S.no</th>
                 <th>Item</th>
                 <th>Category</th>
                 <th>Transaction Type</th>
                 <th>Quantity</th>
                 <th>Date</th>
-                <th>Remarks</th>
+                <!-- <th>Remarks</th> -->
             </tr>
         </thead>
         <tbody>
-            {% for txn in transactions %}
+            {% for txn in page_obj %}
             <tr>
-                <td>{{ txn.id }}</td>
+                <td>{{ forloop.counter }}</td>
                 <td>{{ txn.item.name }}</td>
                 <td>
                     {% if txn.item.category in PREDEFINED_CATEGORIES %}
@@ -31,10 +31,16 @@
                         {{ txn.item.category }} <span class="badge bg-info text-dark">Custom</span>
                     {% endif %}
                 </td>
-                <td>{{ txn.transaction_type }}</td>
+                <td>
+                    {% if txn.transaction_type == 'IN' %}
+                        <span class="badge bg-success">Stock In</span>
+                    {% else %}
+                        <span class="badge bg-danger">Stock Out</span>
+                    {% endif %}
+                </td>
                 <td>{{ txn.quantity }}</td>
-                <td>{{ txn.date|date:"Y-m-d H:i" }}</td>
-                <td>{{ txn.remarks }}</td>
+                <td>{{ txn.date|date:"D-m-y H:i" }}</td>
+                <!-- <td>{{ txn.remarks }}</td> -->
             </tr>
             {% empty %}
             <tr>
@@ -43,6 +49,24 @@
             {% endfor %}
         </tbody>
     </table>
+     <!-- Pagination Controls -->
+    <div class="d-flex justify-content-center mt-3">
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <a class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</a>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
 </div>
 {% endblock %}
 

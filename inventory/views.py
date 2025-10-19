@@ -249,6 +249,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import Item, Transaction
 from django.db.models import F
+from django.core.paginator import Paginator
 
 # Predefined categories for dropdown
 PREDEFINED_CATEGORIES = ["Sensor", "Connector", "Resistor", "Microcontroller"]
@@ -257,22 +258,30 @@ def dashboard(request):
     total_items = Item.objects.count()
     low_stock = Item.objects.filter(quantity__lte=F('reorder_level')).count()
     out_stock = Item.objects.filter(quantity=0).count()
-    items = Item.objects.all()
+    items = Item.objects.all().order_by('serial_no')
+    paginator = Paginator(items, 10)  # 10 items per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     context = {
         'total_items': total_items,
         'low_stock': low_stock,
         'out_stock': out_stock,
         'items': items,
-        'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES
+        'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES,
+        'page_obj': page_obj,
     }
     return render(request, 'inventory/dashboard.html', context)
 
 
 def inventory_list(request):
-    items = Item.objects.all()
+    items = Item.objects.all().order_by('serial_no')
+    paginator = Paginator(items, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     context = {
         'items': items,
-        'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES
+        'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES,
+        'page_obj': page_obj,
     }
     return render(request, 'inventory/inventory_list.html', context)
 
@@ -373,9 +382,14 @@ def remove_stock(request, item_id):
 
 
 def transaction_history(request):
-    transactions = Transaction.objects.all().order_by('-date')
+    # transactions = Transaction.objects.all().order_by('-date')
+    transactions = Transaction.objects.select_related('item').order_by('-date')
+    paginator = Paginator(transactions, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     context = {
         'transactions': transactions,
-        'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES
+        'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES,
+        'page_obj': page_obj,
     }
     return render(request, 'inventory/transaction_history.html', context)
