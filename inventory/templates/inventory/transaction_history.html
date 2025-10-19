@@ -16,6 +16,7 @@
                 <th>Transaction Type</th>
                 <th>Quantity</th>
                 <th>Date</th>
+                <th>Storage Location</th>
                 <!-- <th>Remarks</th> -->
             </tr>
         </thead>
@@ -39,7 +40,8 @@
                     {% endif %}
                 </td>
                 <td>{{ txn.quantity }}</td>
-                <td>{{ txn.date|date:"D-m-y H:i" }}</td>
+                <td>{{ txn.date|date:"d-m-y H:i" }}</td>
+                <td>{{ txn.storage_location }}</td>
                 <!-- <td>{{ txn.remarks }}</td> -->
             </tr>
             {% empty %}

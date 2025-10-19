@@ -38,6 +38,7 @@
                 <th>Category</th>
                 <th>Qty</th>
                 <th>Reorder Level</th>
+                <th>Storage Location</th>
             </tr>
         </thead>
         <tbody>
@@ -54,6 +55,7 @@
                 </td>
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.reorder_level }}</td>
+                <td>{{ item.storage_location }}</td>
             </tr>
             {% empty %}
             <tr>

@@ -19,6 +19,7 @@
                 <th>Category</th>
                 <th>Qty</th>
                 <th>Reorder Level</th>
+                <th>Storage Location</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -36,6 +37,7 @@
                 </td>
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.reorder_level }}</td>
+                <td>{{ item.storage_location }}</td>
                 <td>
                     <a href="{% url 'edit_item' item.id %}" class="btn btn-sm btn-primary">Edit</a>
                     <a href="{% url 'delete_item' item.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
