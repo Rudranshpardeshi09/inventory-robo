@@ -132,6 +132,7 @@ class Item(models.Model):
     location = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
 
     # def save(self, *args, **kwargs):
     #     # ✅ Automatically assign serial number safely
