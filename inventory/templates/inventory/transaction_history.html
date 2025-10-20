@@ -1,5 +1,6 @@
 {% extends 'inventory/base.html' %}
 {% load static %}
+{% load tz %}
 
 {% block title %}Transaction History{% endblock %}
 
@@ -40,7 +41,7 @@
                     {% endif %}
                 </td>
                 <td>{{ txn.quantity }}</td>
-                <td>{{ txn.date|date:"d-m-y H:i" }}</td>
+                <td>{{ txn.date|localtime|date:"d-m-Y h:i A" }}</td>
                 <td>{{ txn.storage_location }}</td>
                 <!-- <td>{{ txn.remarks }}</td> -->
             </tr>

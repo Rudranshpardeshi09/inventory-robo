@@ -250,6 +250,8 @@ from django.contrib import messages
 from .models import Item, Transaction
 from django.db.models import F
 from django.core.paginator import Paginator
+from django.utils import timezone  # ✅ for updating transaction timestamp
+
 
 # Predefined categories for dropdown
 PREDEFINED_CATEGORIES = ["Sensor", "Connector", "Resistor", "Microcontroller"]
@@ -360,7 +362,10 @@ def add_stock(request, item_id):
         qty = int(request.POST.get("quantity"))
         item.quantity += qty
         item.save()
-        Transaction.objects.create(item=item, transaction_type='IN', quantity=qty)
+         # Create transaction and update timestamp
+        txn = Transaction.objects.create(item=item, transaction_type='IN', quantity=qty)
+        txn.date = timezone.now()  # ✅ manually update timestamp
+        txn.save()
         messages.success(request, f"{qty} units added to {item.name}")
         return redirect('inventory_list')
     return render(request, 'inventory/add_stock.html', {'item': item})
@@ -375,7 +380,10 @@ def remove_stock(request, item_id):
         else:
             item.quantity -= qty
             item.save()
-            Transaction.objects.create(item=item, transaction_type='OUT', quantity=qty)
+             # Create transaction and update timestamp
+            txn = Transaction.objects.create(item=item, transaction_type='OUT', quantity=qty)
+            txn.date = timezone.now()  # ✅ manually update timestamp
+            txn.save()
             messages.success(request, f"{qty} units removed from {item.name}")
         return redirect('inventory_list')
     return render(request, 'inventory/remove_stock.html', {'item': item})
