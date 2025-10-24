@@ -4,20 +4,41 @@
 {% block title %}Add Item{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h2 class="text-center mb-4">➕ Add New Item</h2>
-    <form method="POST" class="card p-4 shadow-sm">
+<div class="container py-5" style="max-width: 1200px;">
+
+    <!-- Page Title -->
+    <h2 class="text-center mb-5 fw-bold" style="
+        background: linear-gradient(90deg, #007bff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2.5rem;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    ">
+        ➕ Add New Item
+    </h2>
+
+    <!-- Form Card -->
+    <form method="POST" class="card p-5 shadow-lg" style="
+        border-radius: 20px;
+        background: linear-gradient(145deg, #ffffff, #f1f3f6);
+    ">
         {% csrf_token %}
-        <div class="row">
+
+        <!-- Item Name & Category -->
+        <div class="row mb-3">
             <div class="col-md-6 mb-3">
-                <label>Name</label>
-                <input type="text" name="name" class="form-control" required>
+                <label class="form-label fw-semibold text-primary">Item Name</label>
+                <input type="text" name="name" class="form-control shadow-sm border-0" 
+                    placeholder="Enter item name" required
+                    style="border-radius: 12px; background-color: #f0f4ff;">
             </div>
 
-            <!-- ✅ Updated Category Section -->
             <div class="col-md-6 mb-3">
-                <label for="category" class="form-label">Category</label>
-                <select id="category" name="category" class="form-select" onchange="toggleCustomCategory(this)" required>
+                <label for="category" class="form-label fw-semibold text-primary">Category</label>
+                <select id="category" name="category" class="form-select shadow-sm border-0" 
+                    onchange="toggleCustomCategory(this)" required
+                    style="border-radius: 12px; background-color: #f0f4ff;">
                     <option value="">Select Category</option>
                     <option value="Sensor">Sensor</option>
                     <option value="Connector">Connector</option>
@@ -27,45 +48,75 @@
                 </select>
 
                 <div class="mt-2" id="custom-category-div" style="display: none;">
-                    <input type="text" name="custom_category" id="custom_category" class="form-control" placeholder="Enter custom category">
+                    <input type="text" name="custom_category" id="custom_category" class="form-control shadow-sm border-0" 
+                        placeholder="Enter custom category"
+                        style="border-radius: 12px; background-color: #f0f4ff;">
                 </div>
             </div>
         </div>
 
-        <div class="row">
+        <!-- Quantity, Reorder, Unit Price -->
+        <div class="row mb-3">
             <div class="col-md-4 mb-3">
-                <label>Quantity</label>
-                <input type="number" name="quantity" class="form-control" required>
+                <label class="form-label fw-semibold text-success">Quantity</label>
+                <input type="number" name="quantity" class="form-control shadow-sm border-0" 
+                    placeholder="Enter quantity" required
+                    style="border-radius: 12px; background-color: #e8fff2;">
             </div>
             <div class="col-md-4 mb-3">
-                <label>Reorder Level</label>
-                <input type="number" name="reorder_level" class="form-control" required>
+                <label class="form-label fw-semibold text-warning">Reorder Level</label>
+                <input type="number" name="reorder_level" class="form-control shadow-sm border-0" 
+                    placeholder="Enter reorder level" required
+                    style="border-radius: 12px; background-color: #fffbe8;">
             </div>
             <div class="col-md-4 mb-3">
-                <label>Unit Price</label>
-                <input type="number" step="0.01" name="unit_price" class="form-control" required>
+                <label class="form-label fw-semibold text-info">Unit Price</label>
+                <input type="number" step="0.01" name="unit_price" class="form-control shadow-sm border-0" 
+                    placeholder="Enter unit price" required
+                    style="border-radius: 12px; background-color: #e8f4ff;">
             </div>
         </div>
 
-        <div class="mb-3">
-            <label>Supplier</label>
-            <input type="text" name="supplier" class="form-control"  required>
-        </div>
-        <div class="mb-3">
-            <label>Location</label>
-            <input type="text" name="location" class="form-control">
-        </div>
-        <div class="mb-3">
-            <label>Description</label>
-            <textarea name="description" class="form-control" rows="3"></textarea>
+        <!-- Supplier & Location -->
+        <div class="row mb-3">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold text-secondary">Supplier</label>
+                <input type="text" name="supplier" class="form-control shadow-sm border-0" 
+                    placeholder="Enter supplier name" required
+                    style="border-radius: 12px; background-color: #f8f8f8;">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold text-secondary">Storage Location</label>
+                <input type="text" name="location" class="form-control shadow-sm border-0" 
+                    placeholder="Enter storage location"
+                    style="border-radius: 12px; background-color: #f8f8f8;">
+            </div>
         </div>
 
-        <button type="submit" class="btn btn-success">Save</button>
-        <a href="{% url 'inventory_list' %}" class="btn btn-secondary">Cancel</a>
+        <!-- Description -->
+        <div class="mb-4">
+            <label class="form-label fw-semibold text-muted">Description</label>
+            <textarea name="description" class="form-control shadow-sm border-0" rows="4" placeholder="Enter item description"
+                style="border-radius: 12px; background-color: #f9f9f9;"></textarea>
+        </div>
+
+        <!-- Buttons -->
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-success shadow-sm" 
+                style="border-radius: 12px; font-weight: 600; padding: 10px 25px; 
+                       background: linear-gradient(90deg, #28a745, #20c997);">
+                Save
+            </button>
+            <a href="{% url 'inventory_list' %}" class="btn btn-secondary shadow-sm" 
+                style="border-radius: 12px; font-weight: 600; padding: 10px 25px; 
+                       background: linear-gradient(90deg, #6c757d, #495057); color: #fff;">
+                Cancel
+            </a>
+        </div>
     </form>
 </div>
 
-<!-- ✅ Script to show/hide custom category input -->
+<!-- Script to show/hide custom category input -->
 <script>
 function toggleCustomCategory(select) {
     var customDiv = document.getElementById('custom-category-div');
@@ -77,4 +128,5 @@ function toggleCustomCategory(select) {
     }
 }
 </script>
+
 {% endblock %}

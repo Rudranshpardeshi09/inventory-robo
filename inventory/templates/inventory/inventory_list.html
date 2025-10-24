@@ -4,54 +4,179 @@
 {% block title %}Inventory List{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* Page title gradient */
+.gradient-title {
+    background: linear-gradient(to right, #007bff, #6c63ff);
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+/* Table hover effect */
+.table-hover tbody tr:hover {
+    background-color: #f1faff !important;
+    transform: translateX(3px);
+    transition: 0.2s ease-in-out;
+}
+
+/* Table container shadow & round corners */
+.table-responsive {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    background: #ffffff;
+    padding: 15px;
+}
+
+/* Search & filter card */
+.search-filter-card {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+    background: linear-gradient(145deg, #e0f7fa, #e8f0ff);
+    padding: 15px 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+    transform: translateY(-20px);
+    opacity: 0;
+    animation: floatCard 0.6s forwards ease-out;
+}
+
+@keyframes floatCard {
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Inputs inside search card */
+.search-filter-card input,
+.search-filter-card select {
+    flex: 1;
+    min-width: 200px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    transition: all 0.25s ease-in-out;
+}
+
+.search-filter-card input:focus,
+.search-filter-card select:focus {
+    box-shadow: 0 0 12px rgba(0,123,255,0.25);
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Icons inside search/filter */
+.search-filter-card i {
+    font-size: 1.1rem;
+    color: #6c757d;
+}
+
+/* Action buttons spacing */
+.action-buttons a {
+    margin-right: 5px;
+    margin-bottom: 3px;
+    transition: all 0.2s ease;
+}
+
+.action-buttons a:hover {
+    transform: translateY(-2px);
+}
+
+/* Table header & numeric alignment */
+th {
+    text-align: center;
+}
+td {
+    vertical-align: middle;
+}
+</style>
+
 <div class="container py-5">
-    <h2 class="text-center mb-4">📋 Inventory List</h2>
-    <div class="d-flex justify-content-between mb-3">
-        <a href="{% url 'add_item' %}" class="btn btn-success">➕ Add Item</a>
-        <a href="{% url 'dashboard' %}" class="btn btn-secondary">🏠 Back to Dashboard</a>
+
+    <!-- Page Title -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold gradient-title"><i class="fa-solid fa-boxes-packing"></i> Inventory List</h2>
+        <p class="text-muted">Manage your stock items efficiently</p>
     </div>
 
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>S.no</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Qty</th>
-                <th>Reorder Level</th>
-                <th>Storage Location</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in page_obj %}
-            <tr>
-                <td>{{ item.serial_no }}</td>
-                <td>{{ item.name }}</td>
-                <td>
-                    {% if item.category in PREDEFINED_CATEGORIES %}
-                        {{ item.category }}
-                    {% else %}
-                        {{ item.category }} <span class="badge bg-info text-dark">Custom</span>
-                    {% endif %}
-                </td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.reorder_level }}</td>
-                <td>{{ item.storage_location }}</td>
-                <td>
-                    <a href="{% url 'edit_item' item.id %}" class="btn btn-sm btn-primary">Edit</a>
-                    <a href="{% url 'delete_item' item.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
-                    <a href="{% url 'add_stock' item.id %}" class="btn btn-sm btn-success">Add Stock</a>
-                    <a href="{% url 'remove_stock' item.id %}" class="btn btn-sm btn-warning">Remove Stock</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" class="text-center text-muted">No items available</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Buttons -->
+    <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+        <a href="{% url 'add_item' %}" class="btn btn-success shadow-sm"><i class="fa-solid fa-plus"></i> Add Item</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary shadow-sm"><i class="fa-solid fa-house"></i> Dashboard</a>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="search-filter-card">
+        <div class="d-flex align-items-center gap-2 flex-grow-1">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search by item name...">
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-layer-group"></i>
+            <select id="categoryFilter">
+                <option value="">All Categories</option>
+                {% for category in PREDEFINED_CATEGORIES %}
+                    <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle" id="inventoryTable">
+            <thead class="table-dark">
+                <tr>
+                    <th>S.no</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Qty</th>
+                    <th>Reorder Level</th>
+                    <th>Storage Location</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj %}
+                <tr>
+                    <td class="text-center">{{ item.serial_no }}</td>
+                    <td class="item-name">{{ item.name }}</td>
+                    <td class="item-category">
+                        {% if item.category in PREDEFINED_CATEGORIES %}
+                            {{ item.category }}
+                        {% else %}
+                          <span class="badge text-white" style="background-color: #18b79fe1 !important;font-size: 0.85rem;">
+                            {{ item.category }} (Custom)
+                          </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-center">{{ item.reorder_level }}</td>
+                    <td>{{ item.storage_location }}</td>
+                    <td class="action-buttons text-center">
+                        <a href="{% url 'edit_item' item.id %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-to-square"></i></a>
+                        <a href="{% url 'delete_item' item.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')"><i class="fa-solid fa-trash"></i></a>
+                        <a href="{% url 'add_stock' item.id %}" class="btn btn-sm btn-success"><i class="fa-solid fa-plus"></i></a>
+                        <a href="{% url 'remove_stock' item.id %}" class="btn btn-sm btn-warning"><i class="fa-solid fa-minus"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted">No items available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
     <!-- Pagination Controls -->
     <div class="d-flex justify-content-center mt-3">
         <nav>
@@ -71,6 +196,30 @@
         </nav>
     </div>
 </div>
+
+<!-- JS for Search & Category Filter -->
+<script>
+const searchInput = document.getElementById("searchInput");
+const categoryFilter = document.getElementById("categoryFilter");
+const tableRows = document.querySelectorAll("#inventoryTable tbody tr");
+
+function filterTable() {
+    const searchValue = searchInput.value.toLowerCase();
+    const categoryValue = categoryFilter.value;
+
+    tableRows.forEach(row => {
+        const itemName = row.querySelector(".item-name").innerText.toLowerCase();
+        const itemCategory = row.querySelector(".item-category").innerText.trim();
+
+        const matchesSearch = itemName.includes(searchValue);
+        const matchesCategory = categoryValue === "" || itemCategory.includes(categoryValue);
+
+        row.style.display = (matchesSearch && matchesCategory) ? "" : "none";
+    });
+}
+
+searchInput.addEventListener("keyup", filterTable);
+categoryFilter.addEventListener("change", filterTable);
+</script>
+
 {% endblock %}
-
-

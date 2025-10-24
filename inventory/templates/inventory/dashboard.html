@@ -5,80 +5,98 @@
 
 {% block content %}
 <div class="container py-5">
-    <h2 class="text-center mb-4">📦 Inventory Dashboard</h2>
 
+    <!-- Title Section -->
+    <div class="text-center mb-5">
+        <h2 class="fw-bold" style="background: linear-gradient(to right, #007bff, #6c63ff); -webkit-background-clip: text; color: transparent;">
+            📦 Inventory Dashboard
+        </h2>
+        <p class="text-muted">Monitor your stock levels and inventory status at a glance</p>
+    </div>
+
+    <!-- Summary Cards -->
     <div class="row mb-4 text-center">
-        <div class="col-md-4">
-            <div class="card shadow-sm p-3">
-                <h5>Total Items</h5>
-                <h2 class="text-primary">{{ total_items }}</h2>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm p-4 border-0" style="border-radius: 15px; background: #e8f0ff;">
+                <h6 class="text-secondary">Total Items</h6>
+                <h2 class="fw-bold text-primary">{{ total_items }}</h2>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm p-3">
-                <h5>Low Stock</h5>
-                <h2 class="text-warning">{{ low_stock }}</h2>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm p-4 border-0" style="border-radius: 15px; background: #fff8e1;">
+                <h6 class="text-secondary">Low Stock</h6>
+                <h2 class="fw-bold text-warning">{{ low_stock }}</h2>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm p-3">
-                <h5>Out of Stock</h5>
-                <h2 class="text-danger">{{ out_stock }}</h2>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm p-4 border-0" style="border-radius: 15px; background: #ffeaea;">
+                <h6 class="text-secondary">Out of Stock</h6>
+                <h2 class="fw-bold text-danger">{{ out_stock }}</h2>
             </div>
         </div>
     </div>
 
-    <a href="{% url 'inventory_list' %}" class="btn btn-primary mb-3">View Inventory List</a>
+    <div class="text-end mb-3">
+        <a href="{% url 'inventory_list' %}" class="btn btn-primary shadow-sm" style="border-radius: 10px;">View Full Inventory</a>
+    </div>
 
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>S.no</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Qty</th>
-                <th>Reorder Level</th>
-                <th>Storage Location</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in page_obj %}
-            <tr>
-                <td>{{ item.serial_no }}</td>
-                <td>{{ item.name }}</td>
-                <td>
-                    {% if item.category in PREDEFINED_CATEGORIES %}
-                        {{ item.category }}
-                    {% else %}
-                        {{ item.category }} <span class="badge bg-info text-dark">Custom</span>
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle shadow-sm" style="border-radius: 10px; overflow: hidden;">
+            <thead class="table-dark">
+                <tr>
+                    <th>S.no</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Qty</th>
+                    <th>Reorder Level</th>
+                    <th>Storage Location</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj %}
+                <tr 
+                    {% if item.quantity == 0 %} class="table-danger"
+                    {% elif item.quantity <= item.reorder_level %} class="table-warning"
                     {% endif %}
-                </td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.reorder_level }}</td>
-                <td>{{ item.storage_location }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" class="text-center text-muted">No items available</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                >
+                    <td>{{ forloop.counter }}</td>
+                    <td class="fw-semibold">{{ item.name }}</td>
+                    <td>
+                        {% if item.category in PREDEFINED_CATEGORIES %}
+                            <span class="">{{ item.category }}</span>
+                        {% else %}
+                           <span class="badge text-white" style="background-color: #18b79fe1 !important;font-size: 0.9rem;">
+    {{ item.category }} (Custom)
+</span>
 
-    <!-- Pagination Controls -->
-    <div class="d-flex justify-content-center mt-3">
+                        {% endif %}
+                    </td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.reorder_level }}</td>
+                    <td>{{ item.storage_location }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">No items available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-center mt-4">
         <nav>
-            <ul class="pagination">
+            <ul class="pagination pagination-lg">
                 {% if page_obj.has_previous %}
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                    <li class="page-item"><a class="page-link shadow-sm" href="?page={{ page_obj.previous_page_number }}">« Prev</a></li>
                 {% endif %}
-
                 <li class="page-item disabled">
-                    <a class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</a>
+                    <a class="page-link shadow-sm">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</a>
                 </li>
-
                 {% if page_obj.has_next %}
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                    <li class="page-item"><a class="page-link shadow-sm" href="?page={{ page_obj.next_page_number }}">Next »</a></li>
                 {% endif %}
             </ul>
         </nav>
