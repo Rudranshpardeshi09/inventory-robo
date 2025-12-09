@@ -17,6 +17,11 @@ urlpatterns = [
 
     # Transactions
     path('transactions/', views.transaction_history, name='transaction_history'),
+
+    # inssuances
+    path('issuances/', views.issuance_list, name='issuance_list'),
+    path('issuances/issue/', views.issue_item, name='issue_item'),
+    path('issuances/receive/', views.receive_item, name='receive_item'),
 ]
 
 
