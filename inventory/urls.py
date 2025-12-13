@@ -22,6 +22,10 @@ urlpatterns = [
     path('issuances/', views.issuance_list, name='issuance_list'),
     path('issuances/issue/', views.issue_item, name='issue_item'),
     path('issuances/receive/', views.receive_item, name='receive_item'),
+
+     # ... your existing urls ...
+    path('import-items/', views.import_items_upload, name='import_items_upload'),
+    path('import-items/mapping/', views.import_items_map, name='import_items_map'),
 ]
 
 

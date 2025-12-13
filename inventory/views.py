@@ -215,9 +215,206 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from django.db import transaction
 from .forms import IssuanceForm, ReceiveForm
+import io
+import pandas as pd
+from django.urls import reverse
+from .forms import ExcelUploadForm, ColumnMappingForm
+from .utils import get_all_categories
 
 # Predefined categories for dropdown
 PREDEFINED_CATEGORIES = ["Sensor", "Connector", "Resistor", "Microcontroller"]
+
+# Fields you allow to import and their friendly labels.
+# Keys are model field names, values are display labels in mapping UI.
+IMPORTABLE_FIELDS = {
+    'name': 'Name',
+    'category': 'Category',
+    'quantity': 'Quantity',
+    'reorder_level': 'Reorder Level',
+    'unit_price': 'Unit Price',
+    'supplier': 'Supplier',
+    'location': 'Storage Location',
+    'description': 'Description',
+}
+
+ALLOWED_EXTENSIONS = ('.xlsx', '.xls', '.csv')
+MAX_ROWS_PREVIEW = 5
+MAX_IMPORT_ROWS = 5000  # safety cap; adjust as needed
+
+def import_items_upload(request):
+    """
+    First step: upload file and preview header/first rows.
+    """
+    if request.method == 'POST':
+        form = ExcelUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            f = request.FILES['file']
+            filename = f.name.lower()
+
+            if not filename.endswith(ALLOWED_EXTENSIONS):
+                messages.error(request, "Unsupported file type. Upload .xlsx, .xls or .csv")
+                return redirect('import_items_upload')
+
+            # Read into pandas DataFrame
+            try:
+                # read excel or csv
+                if filename.endswith(('.xls', '.xlsx')):
+                    df = pd.read_excel(f, engine='openpyxl' if filename.endswith('.xlsx') else None)
+                else:
+                    # csv
+                    file_bytes = f.read()
+                    encoding = 'utf-8'
+                    try:
+                        df = pd.read_csv(io.BytesIO(file_bytes), encoding=encoding)
+                    except Exception:
+                        # fallback with latin-1
+                        df = pd.read_csv(io.BytesIO(file_bytes), encoding='latin-1')
+                # Limit rows for preview/safety
+                preview = df.head(MAX_ROWS_PREVIEW)
+            except Exception as e:
+                messages.error(request, f"Failed to parse file: {e}")
+                return redirect('import_items_upload')
+
+            # store raw data in session as JSON-friendly format (list of dicts) OR in memory via request.FILES? 
+            # We'll store small preview + entire file in session via bytes (base64) is heavy — better: store file in temp
+            # For simplicity we'll save uploaded file in request.FILES -> but we need persistence across request.
+            # Simpler approach: save file bytes into session (if small). We'll limit to reasonable sizes.
+            try:
+                f.seek(0)
+                data_bytes = f.read()
+                # store in session as base64 string
+                import base64
+                request.session['import_file_name'] = filename
+                request.session['import_file_bytes'] = base64.b64encode(data_bytes).decode('ascii')
+                request.session['import_has_header'] = bool(form.cleaned_data.get('has_header', True))
+            except Exception as e:
+                messages.warning(request, "Failed to store file in session — you may need to re-upload on mapping step.")
+                # fallback: provide mapping immediately without persisting file
+                request.session.pop('import_file_bytes', None)
+
+            # build columns list for mapping UI
+            cols = list(preview.columns.astype(str))
+            # convert preview to list-of-lists for template
+            preview_rows = preview.fillna('').astype(str).values.tolist()
+
+            context = {
+                'cols': cols,
+                'preview_rows': preview_rows,
+                'importable_fields': IMPORTABLE_FIELDS,
+                'filename': filename,
+                'has_header': form.cleaned_data.get('has_header', True),
+            }
+            return render(request, 'inventory/import_mapping.html', context)
+    else:
+        form = ExcelUploadForm()
+    return render(request, 'inventory/import_upload.html', {'form': form})
+
+def import_items_map(request):
+    """
+    Mapping step: user posted mapping selection -> perform import.
+    Expects the uploaded file in session as 'import_file_bytes'.
+    """
+    # Reconstruct DataFrame from session
+    import base64
+    file_b64 = request.session.get('import_file_bytes')
+    filename = request.session.get('import_file_name')
+    if not file_b64:
+        messages.error(request, "Upload file first.")
+        return redirect('import_items_upload')
+
+    file_bytes = base64.b64decode(file_b64)
+    try:
+        if filename.endswith(('.xls', '.xlsx')):
+            df = pd.read_excel(io.BytesIO(file_bytes), engine='openpyxl' if filename.endswith('.xlsx') else None)
+        else:
+            # csv fallback
+            df = pd.read_csv(io.BytesIO(file_bytes), encoding='utf-8')
+    except Exception as e:
+        messages.error(request, f"Could not read uploaded file: {e}")
+        return redirect('import_items_upload')
+
+    cols = list(df.columns.astype(str))
+    # Read mapping submitted by user
+    if request.method == 'POST':
+        # mapping keys are like 'map_0', 'map_1' etc representing column indices
+        mapping = {}
+        for i, col in enumerate(cols):
+            mapped_to = request.POST.get(f'map_{i}')
+            if mapped_to:
+                mapping[col] = mapped_to  # mapped_to is model field name
+        if not mapping:
+            messages.error(request, "No mapping provided. Map at least one column to import.")
+            return redirect('import_items_upload')
+
+        # Build rows to import
+        rows = []
+        for _, row in df.iterrows():
+            item_kwargs = {}
+            for col_name, model_field in mapping.items():
+                # get value safely and convert for known numeric fields
+                raw_value = row.get(col_name, None)
+                if pd.isna(raw_value):
+                    raw_value = None
+                # convert types if target is numeric
+                if model_field in ('quantity', 'reorder_level'):
+                    try:
+                        item_kwargs[model_field] = int(raw_value) if raw_value is not None else 0
+                    except Exception:
+                        item_kwargs[model_field] = 0
+                elif model_field == 'unit_price':
+                    try:
+                        item_kwargs[model_field] = float(raw_value) if raw_value is not None else 0.0
+                    except Exception:
+                        item_kwargs[model_field] = 0.0
+                else:
+                    item_kwargs[model_field] = str(raw_value).strip() if raw_value is not None else ''
+            rows.append(item_kwargs)
+
+        # safety cap
+        if len(rows) > MAX_IMPORT_ROWS:
+            messages.error(request, f"File too large. Max {MAX_IMPORT_ROWS} rows allowed.")
+            return redirect('import_items_upload')
+
+        # Start DB import transaction
+        created = 0
+        errors = []
+        with transaction.atomic():
+            for idx, kw in enumerate(rows, start=1):
+                # Build final kwargs for Item.create. Only include allowed fields.
+                item_data = {k: v for k, v in kw.items() if k in IMPORTABLE_FIELDS}
+                # if category field is empty, set default
+                if 'category' in item_data and not item_data['category']:
+                    item_data['category'] = 'Other'
+                # Ensure numeric fields have defaults
+                item_data.setdefault('quantity', 0)
+                item_data.setdefault('reorder_level', 0)
+                item_data.setdefault('unit_price', 0.0)
+                # Validate (basic)
+                try:
+                    Item.objects.create(**item_data)
+                    created += 1
+                except Exception as e:
+                    errors.append(f"Row {idx}: {e}")
+                    # depending on your policy you can rollback entire transaction or continue; here we continue but still inside transaction
+            # commit happens automatically if no exception
+        # cleanup session
+        request.session.pop('import_file_bytes', None)
+        request.session.pop('import_file_name', None)
+        messages.success(request, f"Imported {created} rows.")
+        if errors:
+            messages.warning(request, f"Import completed with errors: {len(errors)}. First error: {errors[0]}")
+        return redirect('inventory_list')
+
+    # GET: render mapping UI if user arrives without POST (fallback)
+    preview = df.head(MAX_ROWS_PREVIEW).fillna('').astype(str).values.tolist()
+    context = {
+        'cols': cols,
+        'preview_rows': preview,
+        'importable_fields': IMPORTABLE_FIELDS,
+        'filename': filename,
+    }
+    return render(request, 'inventory/import_mapping.html', context)
+
 
 
 def dashboard(request):
@@ -233,7 +430,7 @@ def dashboard(request):
         'low_stock': low_stock,
         'out_stock': out_stock,
         'items': items,
-        'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES,
+        'CATEGORIES': get_all_categories(),
         'page_obj': page_obj,
     }
     return render(request, 'inventory/dashboard.html', context)
@@ -246,7 +443,7 @@ def inventory_list(request):
     page_obj = paginator.get_page(page_number)
     context = {
         'items': items,
-        'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES,
+        'CATEGORIES': get_all_categories(),
         'page_obj': page_obj,
     }
     return render(request, 'inventory/inventory_list.html', context)
@@ -276,7 +473,8 @@ def add_item(request):
             messages.error(request, "Negative values are not allowed.")
             return redirect('add_item')
 
-        final_category = custom_category if category == "Other" and custom_category else category
+        #FINAL CATEGORY LOGIC
+        final_category = custom_category.strip() if category == "Other" and custom_category else category
 
         Item.objects.create(
             name=name,
@@ -290,8 +488,10 @@ def add_item(request):
         )
         messages.success(request, "Item added successfully!")
         return redirect('inventory_list')
-
-    return render(request, 'inventory/add_item.html', {'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES})
+    context = {
+        'CATEGORIES': get_all_categories(),  # 🔥 dynamic categories
+    }
+    return render(request, 'inventory/add_item.html',context) #
 
 
 def edit_item(request, item_id):
@@ -310,7 +510,11 @@ def edit_item(request, item_id):
         item.save()
         messages.success(request, "Item updated successfully!")
         return redirect('inventory_list')
-    return render(request, 'inventory/edit_item.html', {'item': item, 'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES})
+   
+    return render(request, 'inventory/edit_item.html',{
+        'item': item,
+        'CATEGORIES': get_all_categories(),
+    }) #
 
 
 def delete_item(request, item_id):
@@ -358,7 +562,7 @@ def transaction_history(request):
     page_obj = paginator.get_page(page_number)
     context = {
         'transactions': transactions,
-        'PREDEFINED_CATEGORIES': PREDEFINED_CATEGORIES,
+        'CATEGORIES': get_all_categories(),
         'page_obj': page_obj,
     }
     return render(request, 'inventory/transaction_history.html', context)

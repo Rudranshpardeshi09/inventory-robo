@@ -9,17 +9,28 @@
     .fade-slide {
         animation: fadeSlide 0.8s ease-in-out;
     }
+
     @keyframes fadeSlide {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* Smooth form fields */
-    .form-control, .form-select {
+    .form-control,
+    .form-select {
         transition: 0.3s ease-in-out;
         font-weight: 500;
     }
-    .form-control:focus, .form-select:focus {
+
+    .form-control:focus,
+    .form-select:focus {
         background: #ffffff !important;
         border: 2px solid #4facfe !important;
         box-shadow: 0 0 12px rgba(79, 172, 254, 0.4) !important;
@@ -34,6 +45,7 @@
         transition: all 0.3s;
         border: 1px solid rgba(255, 255, 255, 0.5);
     }
+
     .glassy-card:hover {
         transform: translateY(-4px);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
@@ -49,18 +61,21 @@
         border-radius: 14px !important;
         color: #fff;
     }
+
     .btn-animated span {
         position: absolute;
         display: block;
     }
+
     .btn-animated:hover {
         transform: scale(1.05);
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.25);
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.25);
     }
 
     .btn-main {
         background: linear-gradient(90deg, #36d1dc, #5b86e5);
     }
+
     .btn-cancel {
         background: linear-gradient(90deg, #ff7e5f, #feb47b);
     }
@@ -76,7 +91,6 @@
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
-
 </style>
 
 <div class="container py-5 fade-slide" style="max-width: 1200px;">
@@ -92,8 +106,8 @@
         <div class="row mb-3">
             <div class="col-md-6 mb-3">
                 <label class="text-primary">Item Name</label>
-                <input type="text" name="name" class="form-control shadow-sm border-0"
-                    placeholder="Enter item name" required>
+                <input type="text" name="name" class="form-control shadow-sm border-0" placeholder="Enter item name"
+                    required>
             </div>
 
             <div class="col-md-6 mb-3">
@@ -101,17 +115,17 @@
                 <select id="category" name="category" class="form-select shadow-sm border-0"
                     onchange="toggleCustomCategory(this)" required>
                     <option value="">Select Category</option>
-                    <option value="Sensor">Sensor</option>
-                    <option value="Connector">Connector</option>
-                    <option value="Resistor">Resistor</option>
-                    <option value="Microcontroller">Microcontroller</option>
-                    <option value="Other">Other</option>
+                    
+                    {% for category in CATEGORIES %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+
+                    <option value="Other">+ Add New Category</option>
                 </select>
 
                 <div class="mt-2" id="custom-category-div" style="display: none;">
                     <input type="text" name="custom_category" id="custom_category"
-                        class="form-control shadow-sm border-0"
-                        placeholder="Enter custom category">
+                        class="form-control shadow-sm border-0" placeholder="Enter custom category">
                 </div>
             </div>
         </div>
@@ -162,8 +176,7 @@
                 ✅ Save Item
             </button>
 
-            <a href="{% url 'inventory_list' %}"
-                class="btn btn-animated btn-cancel px-4 py-2 text-white">
+            <a href="{% url 'inventory_list' %}" class="btn btn-animated btn-cancel px-4 py-2 text-white">
                 ✖ Cancel
             </a>
         </div>

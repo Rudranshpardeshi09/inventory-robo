@@ -47,3 +47,16 @@ class ReceiveForm(forms.Form):
     issuance_id = forms.IntegerField(widget=forms.HiddenInput())
     component_status = forms.ChoiceField(choices=COMPONENT_STATUS)
     remark = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
+
+
+#excel upload
+class ExcelUploadForm(forms.Form):
+    file = forms.FileField(label="Excel file (.xlsx recommended)")
+    has_header = forms.BooleanField(label="File has header row", required=False, initial=True)
+
+class ColumnMappingForm(forms.Form):
+    """
+    This form will be created dynamically in the view. It maps excel columns -> model fields.
+    Each mapping field name will be 'map_<excel_col_index>' so we can iterate in view.
+    """
+    pass

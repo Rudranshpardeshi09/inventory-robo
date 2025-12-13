@@ -385,15 +385,9 @@
                     <td class="fw-bold text-muted">{{ forloop.counter }}</td>
                     <td class="fw-semibold">{{ item.name }}</td>
                     <td>
-                        {% if item.category in PREDEFINED_CATEGORIES %}
-                        <span class="badge badge-modern" style="background: var(--primary); color: white;">
+                        <span class="badge badge-modern" style="background: var(--primary); color: #fff;">
                             {{ item.category }}
                         </span>
-                        {% else %}
-                        <span class="badge badge-modern" style="background: var(--success); color: white;">
-                            <i class="fas fa-star me-1"></i>{{ item.category }}
-                        </span>
-                        {% endif %}
                     </td>
                     <td>
                         <span

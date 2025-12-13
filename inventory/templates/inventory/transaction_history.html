@@ -24,8 +24,15 @@
 
     /* Animation */
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .fade-in {
@@ -136,6 +143,12 @@
         box-shadow: var(--shadow-soft);
     }
 
+    .badge-category {
+        background: var(--primary);
+        color: #fff;
+    }
+
+
     .badge-custom {
         background: var(--accent);
         color: #fff;
@@ -174,7 +187,9 @@
 
     /* Responsive */
     @media (max-width: 768px) {
-        .search-filter-card { flex-direction: column; }
+        .search-filter-card {
+            flex-direction: column;
+        }
     }
 </style>
 
@@ -196,7 +211,7 @@
             <i class="fa-solid fa-layer-group input-icon"></i>
             <select id="categoryFilter">
                 <option value="">All Categories</option>
-                {% for category in PREDEFINED_CATEGORIES %}
+                {% for category in CATEGORIES %}
                 <option value="{{ category }}">{{ category }}</option>
                 {% endfor %}
             </select>
@@ -223,11 +238,11 @@
                     <td>{{ forloop.counter }}</td>
                     <td class="item-name fw-semibold">{{ txn.item.name }}</td>
                     <td class="item-category">
-                        {% if txn.item.category in PREDEFINED_CATEGORIES %}
-                        {{ txn.item.category }}
-                        {% else %}
-                        <span class="badge badge-custom"><i class="fas fa-star me-1"></i>{{ txn.item.category }}</span>
-                        {% endif %}
+
+                        <span class="badge badge-modern badge-category">
+                            {{ txn.item.category }}
+                        </span>
+
                     </td>
                     <td>
                         {% if txn.transaction_type == 'IN' %}
